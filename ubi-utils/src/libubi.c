@@ -30,9 +30,10 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <libubi.h>
+#include "libubi.h"
 #include "libubi_int.h"
 #include "common.h"
+#include <sys/sysmacros.h>
 
 #define PROGRAM_NAME "libubi"
 
@@ -370,7 +371,7 @@ static int vol_node2nums(struct libubi *lib, const char *node, int *dev_num,
 {
 	struct stat st;
 	struct ubi_info info;
-	int i, fd, major, minor;
+	int i, fd, i_major, i_minor;
 	char file[strlen(lib->ubi_vol) + 100];
 
 	if (stat(node, &st))
@@ -382,10 +383,10 @@ static int vol_node2nums(struct libubi *lib, const char *node, int *dev_num,
 		return errmsg("\"%s\" is not a character device", node);
 	}
 
-	major = major(st.st_rdev);
-	minor = minor(st.st_rdev);
+	i_major = major(st.st_rdev);
+	i_minor = minor(st.st_rdev);
 
-	if (minor == 0) {
+	if (i_minor == 0) {
 		errno = EINVAL;
 		return errmsg("\"%s\" is not a volume character device", node);
 	}
@@ -403,7 +404,7 @@ static int vol_node2nums(struct libubi *lib, const char *node, int *dev_num,
 			return -1;
 		}
 
-		if (major1 == major)
+		if (major1 == i_major)
 			break;
 	}
 
@@ -413,7 +414,7 @@ static int vol_node2nums(struct libubi *lib, const char *node, int *dev_num,
 	}
 
 	/* Make sure this UBI volume exists */
-	sprintf(file, lib->ubi_vol, i, minor - 1);
+	sprintf(file, lib->ubi_vol, i, i_minor - 1);
 	fd = open(file, O_RDONLY);
 	if (fd == -1) {
 		errno = ENODEV;
@@ -421,7 +422,7 @@ static int vol_node2nums(struct libubi *lib, const char *node, int *dev_num,
 	}
 
 	*dev_num = i;
-	*vol_id = minor - 1;
+	*vol_id = i_minor - 1;
 	errno = 0;
 	return 0;
 }
@@ -438,7 +439,7 @@ static int dev_node2num(struct libubi *lib, const char *node, int *dev_num)
 {
 	struct stat st;
 	struct ubi_info info;
-	int i, major, minor;
+	int i, i_major, i_minor;
 
 	if (stat(node, &st))
 		return sys_errmsg("cannot get information about \"%s\"", node);
@@ -448,10 +449,10 @@ static int dev_node2num(struct libubi *lib, const char *node, int *dev_num)
 		return errmsg("\"%s\" is not a character device", node);
 	}
 
-	major = major(st.st_rdev);
-	minor = minor(st.st_rdev);
+	i_major = major(st.st_rdev);
+	i_minor = minor(st.st_rdev);
 
-	if (minor != 0) {
+	if (i_minor != 0) {
 		errno = EINVAL;
 		return errmsg("\"%s\" is not an UBI character device", node);
 	}
@@ -469,7 +470,7 @@ static int dev_node2num(struct libubi *lib, const char *node, int *dev_num)
 			return -1;
 		}
 
-		if (major1 == major) {
+		if (major1 == i_major) {
 			if (minor1 != 0) {
 				errmsg("UBI character device minor number is "
 				       "%d, but must be 0", minor1);
@@ -751,7 +752,7 @@ int ubi_probe_node(libubi_t desc, const char *node)
 {
 	struct stat st;
 	struct ubi_info info;
-	int i, fd, major, minor;
+	int i, fd, i_major, i_minor;
 	struct libubi *lib = (struct libubi *)desc;
 	char file[strlen(lib->ubi_vol) + 100];
 
@@ -764,8 +765,8 @@ int ubi_probe_node(libubi_t desc, const char *node)
 		return -1;
 	}
 
-	major = major(st.st_rdev);
-	minor = minor(st.st_rdev);
+	i_major = major(st.st_rdev);
+	i_minor = minor(st.st_rdev);
 
 	if (ubi_get_info((libubi_t *)lib, &info))
 		return -1;
@@ -782,18 +783,18 @@ int ubi_probe_node(libubi_t desc, const char *node)
 			return -1;
 		}
 
-		if (major1 == major)
+		if (major1 == i_major)
 			break;
 	}
 
 	if (i > info.highest_dev_num)
 		goto out_not_ubi;
 
-	if (minor == 0)
+	if (i_minor == 0)
 		return 1;
 
 	/* This is supposdely an UBI volume device node */
-	sprintf(file, lib->ubi_vol, i, minor - 1);
+	sprintf(file, lib->ubi_vol, i, i_minor - 1);
 	fd = open(file, O_RDONLY);
 	if (fd == -1)
 		goto out_not_ubi;
@@ -802,7 +803,7 @@ int ubi_probe_node(libubi_t desc, const char *node)
 
 out_not_ubi:
 	errmsg("\"%s\" has major:minor %d:%d, but this does not correspond to "
-	       "any existing UBI device or volume", node, major, minor);
+	       "any existing UBI device or volume", node, i_major, i_minor);
 	errno = ENODEV;
 	return -1;
 }
