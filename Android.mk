@@ -8,7 +8,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -O2 -Wall
 LOCAL_LDLIBS += -lz -lm 
- 
+LOCAL_STATIC_LIBRARIES := libselinux 
 LOCAL_SRC_FILES := \
        ubi-utils/src/libubi.c \
        mkfs.ubifs/mkfs.ubifs.c \
@@ -32,7 +32,8 @@ LOCAL_C_INCLUDES += \
         $(LOCAL_PATH)/ubi-utils/include \
         $(LOCAL_PATH)/ubi-utils/src \
         $(LOCAL_PATH)/lzo-2.03/include \
-        $(LOCAL_PATH)/uuid/  
+        $(LOCAL_PATH)/uuid/  \
+	external/libselinux/include 
 
 LOCAL_MODULE := mkfs_ubifs
 
