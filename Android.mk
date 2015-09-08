@@ -6,8 +6,10 @@ include $(CLEAR_VARS)
 
 include $(CLEAR_VARS)
 
+LOCAL_MULTILIB = 32
 LOCAL_CFLAGS += -O2 -Wall
 LOCAL_LDLIBS += -lz -lm 
+LOCAL_SHARED_LIBRARIES += libcutils
 LOCAL_STATIC_LIBRARIES := libselinux 
 LOCAL_SRC_FILES := \
        ubi-utils/src/libubi.c \

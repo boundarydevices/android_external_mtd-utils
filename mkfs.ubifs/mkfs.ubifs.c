@@ -1843,7 +1843,7 @@ static int add_directory(const char *dir_name, ino_t dir_inum, struct stat *st,
 			nlink += 1;
 			type = UBIFS_ITYPE_DIR;
 		} else {
-			err = add_non_dir(name, &inum, 0, &type, &fake_st);
+			err = add_non_dir(name, inum, 0, &type, &fake_st);
 			if (err)
 				goto out_free;
 		}
